@@ -1,0 +1,5 @@
+{
+  "name": "Ecopower Dynamic Prices",
+  "render_readme": true,
+  "homeassistant": "2024.1.0"
+}

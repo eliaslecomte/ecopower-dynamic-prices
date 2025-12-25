@@ -1,0 +1,81 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Select Source Sensor",
+        "description": "Select the energy price sensor to use as the data source. Supported integrations: EPEX Spot, Energi Data Service.",
+        "data": {
+          "source_entity_id": "Source Sensor"
+        }
+      },
+      "costs": {
+        "title": "Configure Cost Parameters",
+        "description": "Configure the cost parameters for {source_entity}. These values will be used to calculate consumption and injection prices.",
+        "data": {
+          "consumption_multiplier": "Consumption Multiplier",
+          "supplier_cost": "Ecopower Tariff",
+          "injection_multiplier": "Injection Multiplier",
+          "injection_deduction": "Injection Deduction",
+          "green_certificates": "GSC (Groene Stroom)",
+          "chp_certificates": "WKK",
+          "distribution_cost": "Afname Tarief",
+          "energy_contribution": "Bijdrage Energie",
+          "excise_tax": "Bijzondere Accijns",
+          "vat_rate": "BTW / VAT Rate"
+        },
+        "data_description": {
+          "consumption_multiplier": "Multiplier applied to market price for consumption (Ecopower margin)",
+          "supplier_cost": "Ecopower administrative cost per kWh",
+          "injection_multiplier": "Multiplier applied to market price for injection",
+          "injection_deduction": "Ecopower deduction per kWh for injection",
+          "green_certificates": "Green electricity certificates (Groene Stroom Certificaten)",
+          "chp_certificates": "Combined heat and power certificates (Warmte-Kracht Koppeling)",
+          "distribution_cost": "Distribution network tariff",
+          "energy_contribution": "Energy contribution fee",
+          "excise_tax": "Special excise tax (Bijzondere Accijns)",
+          "vat_rate": "VAT rate as multiplier (e.g., 1.06 for 6%)"
+        }
+      }
+    },
+    "error": {
+      "sensor_not_found": "The selected sensor was not found",
+      "no_attributes": "The selected sensor has no attributes",
+      "cannot_parse": "Cannot parse price data from this sensor. Make sure it's from EPEX Spot or Energi Data Service."
+    },
+    "abort": {
+      "already_configured": "This source sensor is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Configure Cost Parameters",
+        "description": "Update the cost parameters for price calculations.",
+        "data": {
+          "consumption_multiplier": "Consumption Multiplier",
+          "supplier_cost": "Ecopower Tariff",
+          "injection_multiplier": "Injection Multiplier",
+          "injection_deduction": "Injection Deduction",
+          "green_certificates": "GSC (Groene Stroom)",
+          "chp_certificates": "WKK",
+          "distribution_cost": "Afname Tarief",
+          "energy_contribution": "Bijdrage Energie",
+          "excise_tax": "Bijzondere Accijns",
+          "vat_rate": "BTW / VAT Rate"
+        },
+        "data_description": {
+          "consumption_multiplier": "Multiplier applied to market price for consumption",
+          "supplier_cost": "Ecopower administrative cost per kWh",
+          "injection_multiplier": "Multiplier applied to market price for injection",
+          "injection_deduction": "Ecopower deduction per kWh for injection",
+          "green_certificates": "Green electricity certificates",
+          "chp_certificates": "Combined heat and power certificates",
+          "distribution_cost": "Distribution network tariff",
+          "energy_contribution": "Energy contribution fee",
+          "excise_tax": "Special excise tax",
+          "vat_rate": "VAT rate as multiplier"
+        }
+      }
+    }
+  }
+}
