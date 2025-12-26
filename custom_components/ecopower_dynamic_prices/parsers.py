@@ -2,7 +2,8 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
+import logging
 from typing import Any
 
 from homeassistant.util import dt as dt_util
@@ -20,6 +21,31 @@ from .const import (
     SOURCE_TYPE_ENERGI_DATA_SERVICE,
     SOURCE_TYPE_EPEX_SPOT,
 )
+
+_LOGGER = logging.getLogger(__name__)
+
+
+def _find_key(attributes: dict[str, Any], *possible_keys: str) -> str | None:
+    """Find a key in attributes, trying multiple variations."""
+    for key in possible_keys:
+        if key in attributes:
+            return key
+        # Try case-insensitive match
+        for attr_key in attributes:
+            if attr_key.lower() == key.lower():
+                return attr_key
+            # Also try with spaces replaced by underscores
+            if attr_key.lower().replace(" ", "_") == key.lower():
+                return attr_key
+    return None
+
+
+def _get_value(attributes: dict[str, Any], *possible_keys: str) -> Any | None:
+    """Get a value from attributes, trying multiple key variations."""
+    key = _find_key(attributes, *possible_keys)
+    if key:
+        return attributes[key]
+    return None
 
 
 @dataclass
@@ -82,31 +108,48 @@ class EpexSpotParser(SourceParser):
         """Return the source type identifier."""
         return SOURCE_TYPE_EPEX_SPOT
 
+    def _get_data_key(self, attributes: dict[str, Any]) -> str | None:
+        """Find the data key in attributes."""
+        return _find_key(attributes, ATTR_DATA, "Data", "data")
+
     def can_parse(self, attributes: dict[str, Any]) -> bool:
         """Check if this parser can handle the given attributes."""
-        if ATTR_DATA not in attributes:
+        data_key = self._get_data_key(attributes)
+        if data_key is None:
+            _LOGGER.debug("EPEX parser: no 'data' key found in attributes")
             return False
 
-        data = attributes[ATTR_DATA]
+        data = attributes[data_key]
         if not isinstance(data, list) or len(data) == 0:
+            _LOGGER.debug("EPEX parser: 'data' is not a non-empty list")
             return False
 
         # Check first entry has required fields
         first_entry = data[0]
         if not isinstance(first_entry, dict):
+            _LOGGER.debug("EPEX parser: first entry is not a dict")
             return False
 
-        return all(
-            key in first_entry
-            for key in [ATTR_START_TIME, ATTR_END_TIME, ATTR_PRICE_PER_KWH]
+        # Check for required keys (case-insensitive)
+        has_start = _find_key(first_entry, ATTR_START_TIME, "start_time") is not None
+        has_end = _find_key(first_entry, ATTR_END_TIME, "end_time") is not None
+        has_price = _find_key(first_entry, ATTR_PRICE_PER_KWH, "price_per_kwh", "price") is not None
+
+        _LOGGER.debug(
+            "EPEX parser check: has_start=%s, has_end=%s, has_price=%s, keys=%s",
+            has_start, has_end, has_price, list(first_entry.keys())
         )
+
+        return has_start and has_end and has_price
 
     def parse_prices(self, attributes: dict[str, Any]) -> ParsedPriceData:
         """Parse price data from EPEX Spot sensor attributes."""
-        data = attributes.get(ATTR_DATA, [])
+        data_key = self._get_data_key(attributes)
+        data = attributes.get(data_key, []) if data_key else []
+
         now = dt_util.now()
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        tomorrow_start = today_start.replace(day=today_start.day + 1)
+        tomorrow_start = today_start + timedelta(days=1)
 
         today_entries: list[PriceEntry] = []
         tomorrow_entries: list[PriceEntry] = []
@@ -114,9 +157,16 @@ class EpexSpotParser(SourceParser):
 
         for entry in data:
             try:
-                start_time = self._parse_datetime(entry[ATTR_START_TIME])
-                end_time = self._parse_datetime(entry[ATTR_END_TIME])
-                price = float(entry[ATTR_PRICE_PER_KWH])
+                start_key = _find_key(entry, ATTR_START_TIME, "start_time")
+                end_key = _find_key(entry, ATTR_END_TIME, "end_time")
+                price_key = _find_key(entry, ATTR_PRICE_PER_KWH, "price_per_kwh", "price")
+
+                if not all([start_key, end_key, price_key]):
+                    continue
+
+                start_time = self._parse_datetime(entry[start_key])
+                end_time = self._parse_datetime(entry[end_key])
+                price = float(entry[price_key])
 
                 price_entry = PriceEntry(
                     start_time=start_time,
@@ -134,7 +184,8 @@ class EpexSpotParser(SourceParser):
                 if start_time <= now < end_time:
                     current_price = price
 
-            except (KeyError, ValueError, TypeError):
+            except (KeyError, ValueError, TypeError) as err:
+                _LOGGER.debug("Error parsing EPEX entry: %s", err)
                 continue
 
         # Sort entries by start time
@@ -168,27 +219,52 @@ class EnergiDataServiceParser(SourceParser):
         """Return the source type identifier."""
         return SOURCE_TYPE_ENERGI_DATA_SERVICE
 
+    def _get_raw_today_key(self, attributes: dict[str, Any]) -> str | None:
+        """Find the raw_today key in attributes."""
+        return _find_key(attributes, ATTR_RAW_TODAY, "raw_today", "Raw today", "raw today")
+
+    def _get_raw_tomorrow_key(self, attributes: dict[str, Any]) -> str | None:
+        """Find the raw_tomorrow key in attributes."""
+        return _find_key(attributes, ATTR_RAW_TOMORROW, "raw_tomorrow", "Raw tomorrow", "raw tomorrow")
+
     def can_parse(self, attributes: dict[str, Any]) -> bool:
         """Check if this parser can handle the given attributes."""
-        if ATTR_RAW_TODAY not in attributes:
+        raw_today_key = self._get_raw_today_key(attributes)
+        if raw_today_key is None:
+            _LOGGER.debug("Energi parser: no 'raw_today' key found in attributes")
             return False
 
-        raw_today = attributes[ATTR_RAW_TODAY]
+        raw_today = attributes[raw_today_key]
         if not isinstance(raw_today, list) or len(raw_today) == 0:
+            _LOGGER.debug("Energi parser: 'raw_today' is not a non-empty list")
             return False
 
         # Check first entry has required fields
         first_entry = raw_today[0]
         if not isinstance(first_entry, dict):
+            _LOGGER.debug("Energi parser: first entry is not a dict")
             return False
 
-        return ATTR_HOUR in first_entry and ATTR_PRICE in first_entry
+        has_hour = _find_key(first_entry, ATTR_HOUR, "hour") is not None
+        has_price = _find_key(first_entry, ATTR_PRICE, "price") is not None
+
+        _LOGGER.debug(
+            "Energi parser check: has_hour=%s, has_price=%s, keys=%s",
+            has_hour, has_price, list(first_entry.keys())
+        )
+
+        return has_hour and has_price
 
     def parse_prices(self, attributes: dict[str, Any]) -> ParsedPriceData:
         """Parse price data from Energi Data Service sensor attributes."""
-        raw_today = attributes.get(ATTR_RAW_TODAY, [])
-        raw_tomorrow = attributes.get(ATTR_RAW_TOMORROW, [])
-        tomorrow_valid = attributes.get(ATTR_TOMORROW_VALID, False)
+        raw_today_key = self._get_raw_today_key(attributes)
+        raw_tomorrow_key = self._get_raw_tomorrow_key(attributes)
+
+        raw_today = attributes.get(raw_today_key, []) if raw_today_key else []
+        raw_tomorrow = attributes.get(raw_tomorrow_key, []) if raw_tomorrow_key else []
+
+        tomorrow_valid_key = _find_key(attributes, ATTR_TOMORROW_VALID, "tomorrow_valid")
+        tomorrow_valid = attributes.get(tomorrow_valid_key, False) if tomorrow_valid_key else False
 
         now = dt_util.now()
         today_entries: list[PriceEntry] = []
@@ -198,25 +274,35 @@ class EnergiDataServiceParser(SourceParser):
         # Parse today's entries
         for i, entry in enumerate(raw_today):
             try:
-                start_time = self._parse_datetime(entry[ATTR_HOUR])
-                price = float(entry[ATTR_PRICE])
+                hour_key = _find_key(entry, ATTR_HOUR, "hour")
+                price_key = _find_key(entry, ATTR_PRICE, "price")
+
+                if not hour_key or not price_key:
+                    continue
+
+                start_time = self._parse_datetime(entry[hour_key])
+                price = float(entry[price_key])
 
                 # Determine end time from next entry or assume 15/60 min intervals
                 if i + 1 < len(raw_today):
-                    next_start = self._parse_datetime(raw_today[i + 1][ATTR_HOUR])
-                    end_time = next_start
+                    next_hour_key = _find_key(raw_today[i + 1], ATTR_HOUR, "hour")
+                    if next_hour_key:
+                        next_start = self._parse_datetime(raw_today[i + 1][next_hour_key])
+                        end_time = next_start
+                    else:
+                        end_time = start_time + timedelta(hours=1)
                 else:
                     # Assume same duration as previous interval or 1 hour
                     if i > 0:
-                        prev_start = self._parse_datetime(raw_today[i - 1][ATTR_HOUR])
-                        duration = start_time - prev_start
-                        end_time = start_time + duration
+                        prev_hour_key = _find_key(raw_today[i - 1], ATTR_HOUR, "hour")
+                        if prev_hour_key:
+                            prev_start = self._parse_datetime(raw_today[i - 1][prev_hour_key])
+                            duration = start_time - prev_start
+                            end_time = start_time + duration
+                        else:
+                            end_time = start_time + timedelta(hours=1)
                     else:
-                        end_time = start_time.replace(
-                            hour=start_time.hour + 1
-                            if start_time.hour < 23
-                            else 0
-                        )
+                        end_time = start_time + timedelta(hours=1)
 
                 price_entry = PriceEntry(
                     start_time=start_time,
@@ -229,30 +315,37 @@ class EnergiDataServiceParser(SourceParser):
                 if start_time <= now < end_time:
                     current_price = price
 
-            except (KeyError, ValueError, TypeError):
+            except (KeyError, ValueError, TypeError) as err:
+                _LOGGER.debug("Error parsing Energi today entry: %s", err)
                 continue
 
         # Parse tomorrow's entries
         for i, entry in enumerate(raw_tomorrow):
             try:
-                start_time = self._parse_datetime(entry[ATTR_HOUR])
-                price = float(entry[ATTR_PRICE])
+                hour_key = _find_key(entry, ATTR_HOUR, "hour")
+                price_key = _find_key(entry, ATTR_PRICE, "price")
+
+                if not hour_key or not price_key:
+                    continue
+
+                start_time = self._parse_datetime(entry[hour_key])
+                price = float(entry[price_key])
 
                 # Determine end time from next entry
                 if i + 1 < len(raw_tomorrow):
-                    next_start = self._parse_datetime(raw_tomorrow[i + 1][ATTR_HOUR])
-                    end_time = next_start
+                    next_hour_key = _find_key(raw_tomorrow[i + 1], ATTR_HOUR, "hour")
+                    if next_hour_key:
+                        next_start = self._parse_datetime(raw_tomorrow[i + 1][next_hour_key])
+                        end_time = next_start
+                    else:
+                        end_time = start_time + timedelta(hours=1)
                 else:
                     # Use same duration as today's entries or 1 hour
                     if today_entries and len(today_entries) > 1:
                         duration = today_entries[1].start_time - today_entries[0].start_time
                         end_time = start_time + duration
                     else:
-                        end_time = start_time.replace(
-                            hour=start_time.hour + 1
-                            if start_time.hour < 23
-                            else 0
-                        )
+                        end_time = start_time + timedelta(hours=1)
 
                 price_entry = PriceEntry(
                     start_time=start_time,
@@ -261,7 +354,8 @@ class EnergiDataServiceParser(SourceParser):
                 )
                 tomorrow_entries.append(price_entry)
 
-            except (KeyError, ValueError, TypeError):
+            except (KeyError, ValueError, TypeError) as err:
+                _LOGGER.debug("Error parsing Energi tomorrow entry: %s", err)
                 continue
 
         # Sort entries by start time

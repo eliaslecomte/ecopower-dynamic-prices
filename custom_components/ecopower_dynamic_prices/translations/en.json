@@ -40,7 +40,8 @@
     "error": {
       "sensor_not_found": "The selected sensor was not found",
       "no_attributes": "The selected sensor has no attributes",
-      "cannot_parse": "Cannot parse price data from this sensor. Make sure it's from EPEX Spot or Energi Data Service."
+      "cannot_parse": "Cannot parse price data from this sensor. Make sure it's from EPEX Spot or Energi Data Service.",
+      "unknown_error": "An unexpected error occurred. Please check the Home Assistant logs for details."
     },
     "abort": {
       "already_configured": "This source sensor is already configured"

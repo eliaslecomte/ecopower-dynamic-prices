@@ -50,20 +50,35 @@ def _validate_source_sensor(
     Returns:
         Tuple of (is_valid, source_type or error_key)
     """
-    state = hass.states.get(entity_id)
+    try:
+        state = hass.states.get(entity_id)
 
-    if state is None:
-        return False, "sensor_not_found"
+        if state is None:
+            _LOGGER.debug("Sensor %s not found", entity_id)
+            return False, "sensor_not_found"
 
-    attributes = state.attributes
-    if not attributes:
-        return False, "no_attributes"
+        attributes = state.attributes
+        if not attributes:
+            _LOGGER.debug("Sensor %s has no attributes", entity_id)
+            return False, "no_attributes"
 
-    parser = get_parser_for_attributes(attributes)
-    if parser is None:
-        return False, "cannot_parse"
+        _LOGGER.debug("Sensor %s attributes keys: %s", entity_id, list(attributes.keys()))
 
-    return True, parser.source_type
+        parser = get_parser_for_attributes(attributes)
+        if parser is None:
+            _LOGGER.debug(
+                "No parser found for sensor %s. Available attributes: %s",
+                entity_id,
+                list(attributes.keys()),
+            )
+            return False, "cannot_parse"
+
+        _LOGGER.debug("Found parser %s for sensor %s", parser.source_type, entity_id)
+        return True, parser.source_type
+
+    except Exception as err:
+        _LOGGER.exception("Error validating sensor %s: %s", entity_id, err)
+        return False, "unknown_error"
 
 
 class EcopowerDynamicPricesConfigFlow(
