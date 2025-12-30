@@ -7,6 +7,7 @@ A Home Assistant integration that calculates real electricity prices for Ecopowe
 ## Table of Contents
 
 - [Features](#features)
+- [Charts](#charts)
 - [Installation](#installation)
   - [HACS (Recommended)](#hacs-recommended)
   - [Manual Installation](#manual-installation)
@@ -31,6 +32,72 @@ A Home Assistant integration that calculates real electricity prices for Ecopowe
 - **Editable cost parameters** via number entities - change values at runtime
 - **Full price arrays** in sensor attributes for easy charting with ApexCharts
 - **Multiple instances** supported - track different source sensors with separate configurations
+
+## Charts
+
+Example ApexCharts card showing today's consumption prices with color-coded thresholds (green for low, orange for medium, red for high prices):
+
+```yaml
+type: custom:apexcharts-card
+graph_span: 24h00m
+experimental:
+  color_threshold: true
+header:
+  title: Energy Prices (Today)
+  show: false
+  show_states: true
+span:
+  start: day
+now:
+  show: true
+  label: now
+  color: darkblue
+series:
+  - entity: sensor.ecopower_energi_consumption_price
+    type: column
+    name: Consumption Price
+    extend_to: end
+    unit: €/kWh
+    float_precision: 4
+    yaxis_id: Price
+    show:
+      in_header: before_now
+      extremas: true
+      header_color_threshold: true
+    color_threshold:
+      - value: 0.15
+        color: "#99CC00"
+      - value: 0.25
+        color: "#ed8c0e"
+      - value: 0.35
+        color: "#e22904"
+    data_generator: |
+      const data = entity.attributes.data;
+      if (!data) {
+        console.log("ApexCharts: No 'data' attribute found!");
+        return [];
+      }
+      return data
+        .filter(entry => entry.start_time && entry.price_per_kwh !== undefined)
+        .map(entry => [new Date(entry.start_time).getTime(), entry.price_per_kwh]);
+    group_by:
+      func: avg
+      duration: 15min
+yaxis:
+  - id: Price
+    decimals: 4
+    apex_config:
+      title:
+        text: €/kWh
+      tickAmount: 5
+apex_config:
+  legend:
+    show: true
+  tooltip:
+    x:
+      show: true
+      format: HH:mm
+```
 
 ## Installation
 
