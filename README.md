@@ -4,6 +4,25 @@
 
 A Home Assistant integration that calculates real electricity prices for Ecopower customers in Belgium, including all taxes, fees, and supplier margins.
 
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+  - [HACS (Recommended)](#hacs-recommended)
+  - [Manual Installation](#manual-installation)
+- [Configuration](#configuration)
+- [Supported Source Integrations](#supported-source-integrations)
+- [Entities Created](#entities-created)
+  - [Sensors](#sensors)
+  - [Number Entities (Editable)](#number-entities-editable)
+- [Price Formulas](#price-formulas)
+  - [Consumption Price](#consumption-price)
+  - [Injection Price](#injection-price)
+- [Sensor Attributes](#sensor-attributes)
+- [Example ApexCharts Card](#example-apexcharts-card)
+- [License](#license)
+- [Contributing](#contributing)
+
 ## Features
 
 - **Parses existing price sensors** from EPEX Spot or Energi Data Service integrations
