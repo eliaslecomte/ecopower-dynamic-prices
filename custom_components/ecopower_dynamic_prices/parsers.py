@@ -25,6 +25,110 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
+def _is_list_like(value: Any) -> bool:
+    """Check if value is list-like (list or tuple)."""
+    return isinstance(value, (list, tuple))
+
+
+def _is_dict_like(value: Any) -> bool:
+    """Check if value is dict-like (has keys method)."""
+    return isinstance(value, dict) or hasattr(value, "keys")
+
+
+def _has_array_with_keys(
+    attributes: dict[str, Any], array_key: str, required_keys: list[str]
+) -> bool:
+    """Check if attributes has an array at array_key with entries containing required_keys.
+
+    This is the core shape detection logic. It checks:
+    1. The array_key exists in attributes
+    2. The value is a non-empty list/tuple
+    3. The first entry is dict-like
+    4. The first entry contains all required_keys
+    """
+    # Check array exists
+    if array_key not in attributes:
+        return False
+
+    array = attributes[array_key]
+
+    # Check it's a non-empty list-like
+    if not _is_list_like(array) or len(array) == 0:
+        return False
+
+    # Check first entry is dict-like
+    first_entry = array[0]
+    if not _is_dict_like(first_entry):
+        return False
+
+    # Check all required keys exist (case-insensitive)
+    for key in required_keys:
+        if _find_key(first_entry, key) is None:
+            return False
+
+    return True
+
+
+def analyze_sensor_shape(attributes: dict[str, Any]) -> dict[str, Any]:
+    """Analyze sensor attributes and return shape information.
+
+    Returns a dict with:
+    - detected_type: 'epex_spot', 'energi_data_service', or None
+    - reason: Human-readable explanation
+    - details: Additional debug info
+    """
+    result = {
+        "detected_type": None,
+        "reason": "",
+        "details": {},
+    }
+
+    # Shape 1: EPEX Spot format
+    # - Has 'data' array with entries containing: start_time, end_time, price_per_kwh
+    if _has_array_with_keys(attributes, "data", ["start_time", "end_time", "price_per_kwh"]):
+        result["detected_type"] = SOURCE_TYPE_EPEX_SPOT
+        result["reason"] = "Found 'data' array with start_time, end_time, price_per_kwh"
+        return result
+
+    # Also check for 'data' with just 'price' (some EPEX integrations)
+    if _has_array_with_keys(attributes, "data", ["start_time", "end_time", "price"]):
+        result["detected_type"] = SOURCE_TYPE_EPEX_SPOT
+        result["reason"] = "Found 'data' array with start_time, end_time, price"
+        return result
+
+    # Shape 2: Energi Data Service format
+    # - Has 'raw_today' array with entries containing: hour, price
+    if _has_array_with_keys(attributes, "raw_today", ["hour", "price"]):
+        result["detected_type"] = SOURCE_TYPE_ENERGI_DATA_SERVICE
+        result["reason"] = "Found 'raw_today' array with hour, price"
+        return result
+
+    # Could not detect - provide diagnostic info
+    result["reason"] = "No matching shape found"
+    result["details"]["attribute_keys"] = list(attributes.keys()) if attributes else []
+
+    # Check what's present for debugging
+    if "data" in attributes:
+        data = attributes["data"]
+        result["details"]["data_type"] = type(data).__name__
+        if _is_list_like(data) and len(data) > 0:
+            first = data[0]
+            result["details"]["data_first_entry_type"] = type(first).__name__
+            if _is_dict_like(first):
+                result["details"]["data_first_entry_keys"] = list(first.keys())
+
+    if "raw_today" in attributes:
+        raw_today = attributes["raw_today"]
+        result["details"]["raw_today_type"] = type(raw_today).__name__
+        if _is_list_like(raw_today) and len(raw_today) > 0:
+            first = raw_today[0]
+            result["details"]["raw_today_first_entry_type"] = type(first).__name__
+            if _is_dict_like(first):
+                result["details"]["raw_today_first_entry_keys"] = list(first.keys())
+
+    return result
+
+
 def _find_key(attributes: dict[str, Any], *possible_keys: str) -> str | None:
     """Find a key in attributes, trying multiple variations."""
     for key in possible_keys:
@@ -32,6 +136,9 @@ def _find_key(attributes: dict[str, Any], *possible_keys: str) -> str | None:
             return key
         # Try case-insensitive match
         for attr_key in attributes:
+            # Skip non-string keys
+            if not isinstance(attr_key, str):
+                continue
             if attr_key.lower() == key.lower():
                 return attr_key
             # Also try with spaces replaced by underscores
@@ -113,34 +220,18 @@ class EpexSpotParser(SourceParser):
         return _find_key(attributes, ATTR_DATA, "Data", "data")
 
     def can_parse(self, attributes: dict[str, Any]) -> bool:
-        """Check if this parser can handle the given attributes."""
-        data_key = self._get_data_key(attributes)
-        if data_key is None:
-            _LOGGER.debug("EPEX parser: no 'data' key found in attributes")
-            return False
+        """Check if this parser can handle the given attributes.
 
-        data = attributes[data_key]
-        if not isinstance(data, list) or len(data) == 0:
-            _LOGGER.debug("EPEX parser: 'data' is not a non-empty list")
-            return False
-
-        # Check first entry has required fields
-        first_entry = data[0]
-        if not isinstance(first_entry, dict):
-            _LOGGER.debug("EPEX parser: first entry is not a dict")
-            return False
-
-        # Check for required keys (case-insensitive)
-        has_start = _find_key(first_entry, ATTR_START_TIME, "start_time") is not None
-        has_end = _find_key(first_entry, ATTR_END_TIME, "end_time") is not None
-        has_price = _find_key(first_entry, ATTR_PRICE_PER_KWH, "price_per_kwh", "price") is not None
-
-        _LOGGER.debug(
-            "EPEX parser check: has_start=%s, has_end=%s, has_price=%s, keys=%s",
-            has_start, has_end, has_price, list(first_entry.keys())
-        )
-
-        return has_start and has_end and has_price
+        Checks for EPEX Spot shape:
+        - Has 'data' array with entries containing 'start_time', 'end_time', and 'price_per_kwh' (or 'price')
+        """
+        # Check for full EPEX format with price_per_kwh
+        if _has_array_with_keys(attributes, "data", ["start_time", "end_time", "price_per_kwh"]):
+            return True
+        # Also accept format with just 'price' instead of 'price_per_kwh'
+        if _has_array_with_keys(attributes, "data", ["start_time", "end_time", "price"]):
+            return True
+        return False
 
     def parse_prices(self, attributes: dict[str, Any]) -> ParsedPriceData:
         """Parse price data from EPEX Spot sensor attributes."""
@@ -228,32 +319,12 @@ class EnergiDataServiceParser(SourceParser):
         return _find_key(attributes, ATTR_RAW_TOMORROW, "raw_tomorrow", "Raw tomorrow", "raw tomorrow")
 
     def can_parse(self, attributes: dict[str, Any]) -> bool:
-        """Check if this parser can handle the given attributes."""
-        raw_today_key = self._get_raw_today_key(attributes)
-        if raw_today_key is None:
-            _LOGGER.debug("Energi parser: no 'raw_today' key found in attributes")
-            return False
+        """Check if this parser can handle the given attributes.
 
-        raw_today = attributes[raw_today_key]
-        if not isinstance(raw_today, list) or len(raw_today) == 0:
-            _LOGGER.debug("Energi parser: 'raw_today' is not a non-empty list")
-            return False
-
-        # Check first entry has required fields
-        first_entry = raw_today[0]
-        if not isinstance(first_entry, dict):
-            _LOGGER.debug("Energi parser: first entry is not a dict")
-            return False
-
-        has_hour = _find_key(first_entry, ATTR_HOUR, "hour") is not None
-        has_price = _find_key(first_entry, ATTR_PRICE, "price") is not None
-
-        _LOGGER.debug(
-            "Energi parser check: has_hour=%s, has_price=%s, keys=%s",
-            has_hour, has_price, list(first_entry.keys())
-        )
-
-        return has_hour and has_price
+        Checks for Energi Data Service shape:
+        - Has 'raw_today' array with entries containing 'hour' and 'price'
+        """
+        return _has_array_with_keys(attributes, "raw_today", ["hour", "price"])
 
     def parse_prices(self, attributes: dict[str, Any]) -> ParsedPriceData:
         """Parse price data from Energi Data Service sensor attributes."""
@@ -378,11 +449,25 @@ PARSERS: list[SourceParser] = [
 
 
 def get_parser_for_attributes(attributes: dict[str, Any]) -> SourceParser | None:
-    """Find a parser that can handle the given attributes."""
-    for parser in PARSERS:
-        if parser.can_parse(attributes):
-            return parser
-    return None
+    """Find a parser that can handle the given attributes based on shape analysis.
+
+    Uses analyze_sensor_shape() to detect the data format, then returns
+    the appropriate parser.
+    """
+    shape_info = analyze_sensor_shape(attributes)
+    detected_type = shape_info["detected_type"]
+
+    _LOGGER.debug(
+        "Shape analysis result: type=%s, reason=%s, details=%s",
+        detected_type,
+        shape_info["reason"],
+        shape_info.get("details", {}),
+    )
+
+    if detected_type is None:
+        return None
+
+    return get_parser_by_type(detected_type)
 
 
 def get_parser_by_type(source_type: str) -> SourceParser | None:

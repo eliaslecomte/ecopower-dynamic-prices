@@ -37,7 +37,7 @@ from .const import (
     DEFAULT_VAT_RATE,
     DOMAIN,
 )
-from .parsers import get_parser_for_attributes
+from .parsers import analyze_sensor_shape, get_parser_for_attributes
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -62,19 +62,38 @@ def _validate_source_sensor(
             _LOGGER.debug("Sensor %s has no attributes", entity_id)
             return False, "no_attributes"
 
-        _LOGGER.debug("Sensor %s attributes keys: %s", entity_id, list(attributes.keys()))
+        _LOGGER.debug(
+            "Validating sensor %s with %d attributes: %s",
+            entity_id,
+            len(attributes),
+            list(attributes.keys()),
+        )
 
-        parser = get_parser_for_attributes(attributes)
-        if parser is None:
-            _LOGGER.debug(
-                "No parser found for sensor %s. Available attributes: %s",
+        # Use shape analyzer to detect format
+        shape_info = analyze_sensor_shape(attributes)
+        _LOGGER.debug(
+            "Shape analysis for %s: type=%s, reason=%s, details=%s",
+            entity_id,
+            shape_info["detected_type"],
+            shape_info["reason"],
+            shape_info.get("details", {}),
+        )
+
+        if shape_info["detected_type"] is None:
+            _LOGGER.warning(
+                "Cannot parse sensor %s: %s. Details: %s",
                 entity_id,
-                list(attributes.keys()),
+                shape_info["reason"],
+                shape_info.get("details", {}),
             )
             return False, "cannot_parse"
 
-        _LOGGER.debug("Found parser %s for sensor %s", parser.source_type, entity_id)
-        return True, parser.source_type
+        _LOGGER.debug(
+            "Successfully detected sensor %s as type: %s",
+            entity_id,
+            shape_info["detected_type"],
+        )
+        return True, shape_info["detected_type"]
 
     except Exception as err:
         _LOGGER.exception("Error validating sensor %s: %s", entity_id, err)
