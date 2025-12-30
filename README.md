@@ -54,6 +54,7 @@ A Home Assistant integration that calculates real electricity prices for Ecopowe
 ### Number Entities (Editable)
 
 **Ecopower-specific:**
+
 | Entity | Default | Description |
 |--------|---------|-------------|
 | `number.ecopower_consumption_multiplier` | 1.02 | Ecopower margin on market price |
@@ -62,6 +63,7 @@ A Home Assistant integration that calculates real electricity prices for Ecopowe
 | `number.ecopower_injection_deduction` | 0.015 €/kWh | Ecopower injection fee |
 
 **Belgian Energy Costs:**
+
 | Entity | Default | Description |
 |--------|---------|-------------|
 | `number.ecopower_green_certificates` | 0.011 €/kWh | GSC (Groene Stroom) |
@@ -81,6 +83,7 @@ A Home Assistant integration that calculates real electricity prices for Ecopowe
 Where `all_costs` = supplier_cost + green_certificates + chp_certificates + distribution_cost + energy_contribution + excise_tax
 
 ### Injection Price
+
 ```
 (market_price × injection_multiplier) - injection_deduction
 ```
