@@ -125,15 +125,19 @@ class EcopowerDynamicPricesConfigFlow(
             is_valid, result = _validate_source_sensor(self.hass, entity_id)
 
             if is_valid:
-                self._source_entity_id = entity_id
-                self._source_type = result
+                try:
+                    self._source_entity_id = entity_id
+                    self._source_type = result
 
-                # Check for duplicate entry
-                await self.async_set_unique_id(entity_id)
-                self._abort_if_unique_id_configured()
+                    # Check for duplicate entry
+                    await self.async_set_unique_id(entity_id)
+                    self._abort_if_unique_id_configured()
 
-                # Proceed to cost parameters step
-                return await self.async_step_costs()
+                    # Proceed to cost parameters step
+                    return await self.async_step_costs()
+                except Exception as err:
+                    _LOGGER.exception("Error after validation for %s: %s", entity_id, err)
+                    errors["base"] = "unknown_error"
             else:
                 errors["base"] = result
 
