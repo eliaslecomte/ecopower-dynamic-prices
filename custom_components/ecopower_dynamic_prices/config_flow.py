@@ -100,11 +100,14 @@ def _validate_source_sensor(
         return False, "unknown_error"
 
 
-def _get_sensor_friendly_name(hass: HomeAssistant, entity_id: str) -> str:
-    """Get a friendly name for the sensor to use in titles.
+def _get_sensor_short_name(hass: HomeAssistant, entity_id: str) -> str:
+    """Get a short name for the sensor to use in the integration title.
 
-    Tries to get the friendly_name attribute first, falls back to
-    parsing the entity_id into a readable format.
+    Tries to get the friendly_name attribute first for a nice display name,
+    falls back to parsing the entity_id into a readable format.
+
+    Note: The title affects the generated entity IDs. If you need predictable
+    entity IDs based on the source sensor's entity_id, use entity_id parsing.
     """
     state = hass.states.get(entity_id)
     if state is not None:
@@ -113,7 +116,7 @@ def _get_sensor_friendly_name(hass: HomeAssistant, entity_id: str) -> str:
             return friendly_name
 
     # Fall back to parsing entity_id
-    # e.g., "sensor.epex_spot_be_price" -> "Epex Spot BE Price"
+    # e.g., "sensor.epex_spot_be_price" -> "Epex Spot Be Price"
     name = entity_id.split(".")[-1]  # Remove domain
     name = name.replace("_", " ").title()
     return name
@@ -148,7 +151,7 @@ class EcopowerDynamicPricesConfigFlow(
                 try:
                     self._source_entity_id = entity_id
                     self._source_type = result
-                    self._source_name = _get_sensor_friendly_name(self.hass, entity_id)
+                    self._source_name = _get_sensor_short_name(self.hass, entity_id)
 
                     # Check for duplicate entry
                     await self.async_set_unique_id(entity_id)
