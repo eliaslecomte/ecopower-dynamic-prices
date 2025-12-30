@@ -193,7 +193,7 @@ class EcopowerDynamicPricesConfigFlow(
                     selector.NumberSelectorConfig(
                         min=0.0,
                         max=0.1,
-                        step=0.0001,
+                        step="any",
                         unit_of_measurement="€/kWh",
                         mode=selector.NumberSelectorMode.BOX,
                     )
@@ -216,7 +216,7 @@ class EcopowerDynamicPricesConfigFlow(
                     selector.NumberSelectorConfig(
                         min=0.0,
                         max=0.1,
-                        step=0.0001,
+                        step="any",
                         unit_of_measurement="€/kWh",
                         mode=selector.NumberSelectorMode.BOX,
                     )
@@ -229,7 +229,7 @@ class EcopowerDynamicPricesConfigFlow(
                     selector.NumberSelectorConfig(
                         min=0.0,
                         max=0.1,
-                        step=0.0001,
+                        step="any",
                         unit_of_measurement="€/kWh",
                         mode=selector.NumberSelectorMode.BOX,
                     )
@@ -241,7 +241,7 @@ class EcopowerDynamicPricesConfigFlow(
                     selector.NumberSelectorConfig(
                         min=0.0,
                         max=0.1,
-                        step=0.0001,
+                        step="any",
                         unit_of_measurement="€/kWh",
                         mode=selector.NumberSelectorMode.BOX,
                     )
@@ -253,7 +253,7 @@ class EcopowerDynamicPricesConfigFlow(
                     selector.NumberSelectorConfig(
                         min=0.0,
                         max=0.2,
-                        step=0.0001,
+                        step="any",
                         unit_of_measurement="€/kWh",
                         mode=selector.NumberSelectorMode.BOX,
                     )
@@ -265,7 +265,7 @@ class EcopowerDynamicPricesConfigFlow(
                     selector.NumberSelectorConfig(
                         min=0.0,
                         max=0.1,
-                        step=0.0001,
+                        step="any",
                         unit_of_measurement="€/kWh",
                         mode=selector.NumberSelectorMode.BOX,
                     )
@@ -277,7 +277,7 @@ class EcopowerDynamicPricesConfigFlow(
                     selector.NumberSelectorConfig(
                         min=0.0,
                         max=0.2,
-                        step=0.0001,
+                        step="any",
                         unit_of_measurement="€/kWh",
                         mode=selector.NumberSelectorMode.BOX,
                     )
@@ -352,7 +352,7 @@ class EcopowerDynamicPricesOptionsFlow(config_entries.OptionsFlow):
                     selector.NumberSelectorConfig(
                         min=0.0,
                         max=0.1,
-                        step=0.0001,
+                        step="any",
                         unit_of_measurement="€/kWh",
                         mode=selector.NumberSelectorMode.BOX,
                     )
@@ -379,7 +379,7 @@ class EcopowerDynamicPricesOptionsFlow(config_entries.OptionsFlow):
                     selector.NumberSelectorConfig(
                         min=0.0,
                         max=0.1,
-                        step=0.0001,
+                        step="any",
                         unit_of_measurement="€/kWh",
                         mode=selector.NumberSelectorMode.BOX,
                     )
@@ -394,7 +394,7 @@ class EcopowerDynamicPricesOptionsFlow(config_entries.OptionsFlow):
                     selector.NumberSelectorConfig(
                         min=0.0,
                         max=0.1,
-                        step=0.0001,
+                        step="any",
                         unit_of_measurement="€/kWh",
                         mode=selector.NumberSelectorMode.BOX,
                     )
@@ -408,7 +408,7 @@ class EcopowerDynamicPricesOptionsFlow(config_entries.OptionsFlow):
                     selector.NumberSelectorConfig(
                         min=0.0,
                         max=0.1,
-                        step=0.0001,
+                        step="any",
                         unit_of_measurement="€/kWh",
                         mode=selector.NumberSelectorMode.BOX,
                     )
@@ -422,7 +422,7 @@ class EcopowerDynamicPricesOptionsFlow(config_entries.OptionsFlow):
                     selector.NumberSelectorConfig(
                         min=0.0,
                         max=0.2,
-                        step=0.0001,
+                        step="any",
                         unit_of_measurement="€/kWh",
                         mode=selector.NumberSelectorMode.BOX,
                     )
@@ -436,7 +436,7 @@ class EcopowerDynamicPricesOptionsFlow(config_entries.OptionsFlow):
                     selector.NumberSelectorConfig(
                         min=0.0,
                         max=0.1,
-                        step=0.0001,
+                        step="any",
                         unit_of_measurement="€/kWh",
                         mode=selector.NumberSelectorMode.BOX,
                     )
@@ -448,7 +448,7 @@ class EcopowerDynamicPricesOptionsFlow(config_entries.OptionsFlow):
                     selector.NumberSelectorConfig(
                         min=0.0,
                         max=0.2,
-                        step=0.0001,
+                        step="any",
                         unit_of_measurement="€/kWh",
                         mode=selector.NumberSelectorMode.BOX,
                     )
