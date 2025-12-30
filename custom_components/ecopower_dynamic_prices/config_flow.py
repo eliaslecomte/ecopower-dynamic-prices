@@ -287,10 +287,11 @@ class EcopowerDynamicPricesConfigFlow(
                     default=DEFAULT_VAT_RATE,
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=1.0,
-                        max=1.5,
-                        step=0.01,
-                        mode=selector.NumberSelectorMode.BOX,
+                        min=0,
+                        max=30,
+                        step=1,
+                        unit_of_measurement="%",
+                        mode=selector.NumberSelectorMode.SLIDER,
                     )
                 ),
             }
@@ -458,10 +459,11 @@ class EcopowerDynamicPricesOptionsFlow(config_entries.OptionsFlow):
                     default=options.get(CONF_VAT_RATE, DEFAULT_VAT_RATE),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=1.0,
-                        max=1.5,
-                        step=0.01,
-                        mode=selector.NumberSelectorMode.BOX,
+                        min=0,
+                        max=30,
+                        step=1,
+                        unit_of_measurement="%",
+                        mode=selector.NumberSelectorMode.SLIDER,
                     )
                 ),
             }

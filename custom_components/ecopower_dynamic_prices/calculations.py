@@ -81,7 +81,7 @@ def calculate_consumption_price(
 ) -> float:
     """Calculate consumption price with all costs applied.
 
-    Formula: ((market_price * consumption_multiplier) + all_costs) * vat_rate
+    Formula: ((market_price * consumption_multiplier) + all_costs) * (1 + vat_rate / 100)
 
     Args:
         market_price: The raw market price in €/kWh
@@ -101,7 +101,10 @@ def calculate_consumption_price(
         + params.excise_tax
     )
 
-    return round((base + total_costs) * params.vat_rate, 4)
+    # Convert VAT percentage to multiplier (e.g., 6% -> 1.06)
+    vat_multiplier = 1 + (params.vat_rate / 100)
+
+    return round((base + total_costs) * vat_multiplier, 4)
 
 
 def calculate_injection_price(

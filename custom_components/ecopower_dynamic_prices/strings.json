@@ -33,7 +33,7 @@
           "distribution_cost": "Distribution network tariff",
           "energy_contribution": "Energy contribution fee",
           "excise_tax": "Special excise tax (Bijzondere Accijns)",
-          "vat_rate": "VAT rate as multiplier (e.g., 1.06 for 6%)"
+          "vat_rate": "VAT percentage (e.g., 6 for 6%)"
         }
       }
     },
@@ -74,7 +74,7 @@
           "distribution_cost": "Distribution network tariff",
           "energy_contribution": "Energy contribution fee",
           "excise_tax": "Special excise tax",
-          "vat_rate": "VAT rate as multiplier"
+          "vat_rate": "VAT percentage"
         }
       }
     }

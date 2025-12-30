@@ -38,7 +38,7 @@ DEFAULT_CHP_CERTIFICATES: Final = 0.0039  # €/kWh WKK (Warmte-Kracht Koppeling
 DEFAULT_DISTRIBUTION_COST: Final = 0.0589  # €/kWh Afname Tarief
 DEFAULT_ENERGY_CONTRIBUTION: Final = 0.0019  # €/kWh Bijdrage op Energie
 DEFAULT_EXCISE_TAX: Final = 0.0475  # €/kWh Bijzondere Accijns
-DEFAULT_VAT_RATE: Final = 1.06  # 6% VAT as multiplier
+DEFAULT_VAT_RATE: Final = 6.0  # 6% VAT as percentage
 
 # Number entity configuration
 NUMBER_ENTITIES: Final = {
@@ -127,10 +127,10 @@ NUMBER_ENTITIES: Final = {
     },
     CONF_VAT_RATE: {
         "name": "BTW / VAT Rate",
-        "min": 1.0,
-        "max": 1.5,
-        "step": 0.01,
-        "unit": None,
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "unit": "%",
         "default": DEFAULT_VAT_RATE,
         "icon": "mdi:percent",
     },
