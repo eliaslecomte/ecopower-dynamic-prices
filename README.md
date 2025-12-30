@@ -11,6 +11,7 @@ A Home Assistant integration that calculates real electricity prices for Ecopowe
 - **Calculates injection prices** with Ecopower deductions
 - **Editable cost parameters** via number entities - change values at runtime
 - **Full price arrays** in sensor attributes for easy charting with ApexCharts
+- **Multiple instances** supported - track different source sensors with separate configurations
 
 ## Installation
 
@@ -31,11 +32,13 @@ A Home Assistant integration that calculates real electricity prices for Ecopowe
 
 ## Configuration
 
-1. Go to **Settings** → **Devices & Services**
+1. Go to **Settings** > **Devices & Services**
 2. Click **Add Integration**
 3. Search for "Ecopower Dynamic Prices"
 4. Select your source sensor (from EPEX Spot or Energi Data Service)
 5. Configure cost parameters (defaults are provided for Ecopower Belgium)
+
+The integration will create a device named based on your source sensor, e.g., "Ecopower (Epex Spot)" or "Ecopower (Energi Data Service Total Price)".
 
 ## Supported Source Integrations
 
@@ -44,41 +47,45 @@ A Home Assistant integration that calculates real electricity prices for Ecopowe
 
 ## Entities Created
 
+Entity IDs are automatically generated based on the source sensor name. For example, if your source sensor is `sensor.epex_spot_be_price`, entities will be named like `sensor.ecopower_epex_spot_be_price_consumption_price`.
+
 ### Sensors
 
-| Entity                              | Description                             |
-| ----------------------------------- | --------------------------------------- |
-| `sensor.ecopower_consumption_price` | Current consumption price with all costs |
-| `sensor.ecopower_injection_price`   | Current injection price with deductions |
+| Entity | Description |
+| ------ | ----------- |
+| `sensor.<name>_consumption_price` | Current consumption price with all costs |
+| `sensor.<name>_injection_price` | Current injection price with deductions |
 
 ### Number Entities (Editable)
+
+All cost parameters can be adjusted at runtime via number entities.
 
 **Ecopower-specific:**
 
 | Entity | Default | Description |
 | ------ | ------- | ----------- |
-| `number.ecopower_consumption_multiplier` | 1.02 | Ecopower margin on market price |
-| `number.ecopower_supplier_cost` | 0.004 €/kWh | Ecopower administrative cost |
-| `number.ecopower_injection_multiplier` | 0.98 | Ecopower margin on injection |
-| `number.ecopower_injection_deduction` | 0.015 €/kWh | Ecopower injection fee |
+| `number.<name>_consumption_multiplier` | 1.02 | Ecopower margin on market price |
+| `number.<name>_ecopower_tariff` | 0.004 €/kWh | Ecopower administrative cost |
+| `number.<name>_injection_multiplier` | 0.98 | Ecopower margin on injection |
+| `number.<name>_injection_deduction` | 0.015 €/kWh | Ecopower injection fee |
 
 **Belgian Energy Costs:**
 
 | Entity | Default | Description |
 | ------ | ------- | ----------- |
-| `number.ecopower_green_certificates` | 0.011 €/kWh | GSC (Groene Stroom) |
-| `number.ecopower_chp_certificates` | 0.0039 €/kWh | WKK certificates |
-| `number.ecopower_distribution_cost` | 0.0589 €/kWh | Afname Tarief |
-| `number.ecopower_energy_contribution` | 0.0019 €/kWh | Bijdrage Energie |
-| `number.ecopower_excise_tax` | 0.0475 €/kWh | Bijzondere Accijns |
-| `number.ecopower_vat_rate` | 1.06 | BTW (6% VAT) |
+| `number.<name>_gsc_groene_stroom` | 0.011 €/kWh | Green electricity certificates |
+| `number.<name>_wkk` | 0.0039 €/kWh | CHP certificates |
+| `number.<name>_afname_tarief` | 0.0589 €/kWh | Distribution network tariff |
+| `number.<name>_bijdrage_energie` | 0.0019 €/kWh | Energy contribution fee |
+| `number.<name>_bijzondere_accijns` | 0.0475 €/kWh | Special excise tax |
+| `number.<name>_btw_vat_rate` | 6 % | VAT percentage |
 
 ## Price Formulas
 
 ### Consumption Price
 
 ```text
-((market_price × consumption_multiplier) + all_costs) × vat_rate
+((market_price * consumption_multiplier) + all_costs) * (1 + vat_rate / 100)
 ```
 
 Where `all_costs` = supplier_cost + green_certificates + chp_certificates + distribution_cost + energy_contribution + excise_tax
@@ -86,7 +93,7 @@ Where `all_costs` = supplier_cost + green_certificates + chp_certificates + dist
 ### Injection Price
 
 ```text
-(market_price × injection_multiplier) - injection_deduction
+(market_price * injection_multiplier) - injection_deduction
 ```
 
 ## Sensor Attributes
@@ -97,7 +104,7 @@ Both sensors include rich attributes for charting:
 # Detailed format (like EPEX Spot)
 data:
   - start_time: '2025-12-25T00:00:00+01:00'
-    end_time: '2025-12-25T00:15:00+01:00'
+    end_time: '2025-12-25T01:00:00+01:00'
     price_per_kwh: 0.1892
 
 # Simplified format (like Energi Data Service)
@@ -111,8 +118,11 @@ tomorrow: [0.2134, ...]
 today_min: 0.1523
 today_max: 0.2456
 today_mean: 0.1834
+tomorrow_min: 0.1456
+tomorrow_max: 0.2234
+tomorrow_mean: 0.1756
 tomorrow_valid: true
-source_entity: sensor.epex_spot_data_market_price
+source_entity: sensor.epex_spot_be_price
 ```
 
 ## Example ApexCharts Card
@@ -126,13 +136,13 @@ graph_span: 48h
 span:
   start: day
 series:
-  - entity: sensor.ecopower_consumption_price
+  - entity: sensor.ecopower_epex_spot_consumption_price
     name: Consumption
     data_generator: |
       return entity.attributes.data.map((entry) => {
         return [new Date(entry.start_time).getTime(), entry.price_per_kwh];
       });
-  - entity: sensor.ecopower_injection_price
+  - entity: sensor.ecopower_epex_spot_injection_price
     name: Injection
     data_generator: |
       return entity.attributes.data.map((entry) => {
