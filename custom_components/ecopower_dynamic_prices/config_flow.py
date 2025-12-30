@@ -161,9 +161,13 @@ class EcopowerDynamicPricesConfigFlow(
     ) -> FlowResult:
         """Handle the cost parameters step."""
         if user_input is not None:
+            # Generate a short title with enumeration
+            existing_count = len(self.hass.config_entries.async_entries(DOMAIN))
+            title = f"Ecopower {existing_count + 1}"
+
             # Create the config entry
             return self.async_create_entry(
-                title=f"Ecopower ({self._source_entity_id})",
+                title=title,
                 data={
                     CONF_SOURCE_ENTITY: self._source_entity_id,
                     CONF_SOURCE_TYPE: self._source_type,

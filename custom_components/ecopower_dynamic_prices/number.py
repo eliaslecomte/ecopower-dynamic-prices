@@ -97,7 +97,7 @@ class EcopowerCostNumber(RestoreNumber):
         """Return device info."""
         return DeviceInfo(
             identifiers={(DOMAIN, self._config_entry.entry_id)},
-            name="Ecopower Dynamic Prices",
+            name=self._config_entry.title,
             manufacturer="Ecopower",
             model="Dynamic Price Calculator",
         )
