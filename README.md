@@ -37,6 +37,8 @@ A Home Assistant integration that calculates real electricity prices for Ecopowe
 
 Example ApexCharts card showing today's consumption prices with color-coded thresholds (green for low, orange for medium, red for high prices):
 
+![Consumption prices chart](images/chart-consumption-prices.png)
+
 ```yaml
 type: custom:apexcharts-card
 graph_span: 24h00m
@@ -44,7 +46,7 @@ experimental:
   color_threshold: true
 header:
   title: Energy Prices (Today)
-  show: false
+  show: true
   show_states: true
 span:
   start: day
