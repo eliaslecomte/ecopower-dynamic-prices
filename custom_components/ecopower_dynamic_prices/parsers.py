@@ -331,8 +331,15 @@ class EnergiDataServiceParser(SourceParser):
         raw_today_key = self._get_raw_today_key(attributes)
         raw_tomorrow_key = self._get_raw_tomorrow_key(attributes)
 
-        raw_today = attributes.get(raw_today_key, []) if raw_today_key else []
-        raw_tomorrow = attributes.get(raw_tomorrow_key, []) if raw_tomorrow_key else []
+        # Get raw data, handling None values (sensor may have null for these)
+        raw_today = attributes.get(raw_today_key) if raw_today_key else None
+        raw_tomorrow = attributes.get(raw_tomorrow_key) if raw_tomorrow_key else None
+
+        # Ensure we have lists, not None
+        if raw_today is None:
+            raw_today = []
+        if raw_tomorrow is None:
+            raw_tomorrow = []
 
         tomorrow_valid_key = _find_key(attributes, ATTR_TOMORROW_VALID, "tomorrow_valid")
         tomorrow_valid = attributes.get(tomorrow_valid_key, False) if tomorrow_valid_key else False
