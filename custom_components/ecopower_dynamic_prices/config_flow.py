@@ -100,6 +100,25 @@ def _validate_source_sensor(
         return False, "unknown_error"
 
 
+def _get_sensor_friendly_name(hass: HomeAssistant, entity_id: str) -> str:
+    """Get a friendly name for the sensor to use in titles.
+
+    Tries to get the friendly_name attribute first, falls back to
+    parsing the entity_id into a readable format.
+    """
+    state = hass.states.get(entity_id)
+    if state is not None:
+        friendly_name = state.attributes.get("friendly_name")
+        if friendly_name:
+            return friendly_name
+
+    # Fall back to parsing entity_id
+    # e.g., "sensor.epex_spot_be_price" -> "Epex Spot BE Price"
+    name = entity_id.split(".")[-1]  # Remove domain
+    name = name.replace("_", " ").title()
+    return name
+
+
 class EcopowerDynamicPricesConfigFlow(
     config_entries.ConfigFlow, domain=DOMAIN
 ):
@@ -111,6 +130,7 @@ class EcopowerDynamicPricesConfigFlow(
         """Initialize the config flow."""
         self._source_entity_id: str | None = None
         self._source_type: str | None = None
+        self._source_name: str | None = None
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -128,6 +148,7 @@ class EcopowerDynamicPricesConfigFlow(
                 try:
                     self._source_entity_id = entity_id
                     self._source_type = result
+                    self._source_name = _get_sensor_friendly_name(self.hass, entity_id)
 
                     # Check for duplicate entry
                     await self.async_set_unique_id(entity_id)
@@ -161,9 +182,8 @@ class EcopowerDynamicPricesConfigFlow(
     ) -> FlowResult:
         """Handle the cost parameters step."""
         if user_input is not None:
-            # Generate a short title with enumeration
-            existing_count = len(self.hass.config_entries.async_entries(DOMAIN))
-            title = f"Ecopower {existing_count + 1}"
+            # Generate title using source sensor name
+            title = f"Ecopower ({self._source_name})"
 
             # Create the config entry
             return self.async_create_entry(
