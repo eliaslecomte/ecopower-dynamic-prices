@@ -43,11 +43,13 @@ Example ApexCharts card showing today's consumption prices with color-coded thre
 
 ```yaml
 type: custom:apexcharts-card
+grid_options:
+  columns: full
 graph_span: 24h00m
 experimental:
   color_threshold: true
 header:
-  title: Energy Prices (Today)
+  title: Consumption Prices (Today)
   show: true
   show_states: true
 span:
@@ -111,6 +113,8 @@ Example ApexCharts card showing today's injection prices with color-coded thresh
 
 ```yaml
 type: custom:apexcharts-card
+grid_options:
+  columns: full
 graph_span: 24h00m
 experimental:
   color_threshold: true
