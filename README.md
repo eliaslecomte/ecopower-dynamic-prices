@@ -35,6 +35,8 @@ A Home Assistant integration that calculates real electricity prices for Ecopowe
 
 ## Charts
 
+### Consumption (today)
+
 Example ApexCharts card showing today's consumption prices with color-coded thresholds (green for low, orange for medium, red for high prices):
 
 ![Consumption prices chart](images/chart-consumption-prices.png)
@@ -73,6 +75,74 @@ series:
         color: "#ed8c0e"
       - value: 0.35
         color: "#e22904"
+    data_generator: |
+      const data = entity.attributes.data;
+      if (!data) {
+        console.log("ApexCharts: No 'data' attribute found!");
+        return [];
+      }
+      return data
+        .filter(entry => entry.start_time && entry.price_per_kwh !== undefined)
+        .map(entry => [new Date(entry.start_time).getTime(), entry.price_per_kwh]);
+    group_by:
+      func: avg
+      duration: 15min
+yaxis:
+  - id: Price
+    decimals: 4
+    apex_config:
+      title:
+        text: €/kWh
+      tickAmount: 5
+apex_config:
+  legend:
+    show: true
+  tooltip:
+    x:
+      show: true
+      format: HH:mm
+```
+
+### Injection (today)
+
+Example ApexCharts card showing today's injection prices with color-coded thresholds (red for negative/low, orange for medium, green for high prices):
+
+![Injection prices chart](images/chart-injection-prices.png)
+
+```yaml
+type: custom:apexcharts-card
+graph_span: 24h00m
+experimental:
+  color_threshold: true
+header:
+  title: Injection Prices (Today)
+  show: true
+  show_states: true
+span:
+  start: day>?"|
+now:
+  show: true
+  label: now
+  color: darkblue
+series:
+  - entity: sensor.ecopower_energi_injection_price
+    type: column
+    name: Injection Price
+    extend_to: end
+    unit: €/kWh
+    float_precision: 4
+    yaxis_id: Price
+    show:
+      in_header: before_now
+      extremas: true
+      header_color_threshold: true
+    color_threshold:
+      - value: 0.00
+        color: "#e22904"
+      - value: 0.05
+        color: "#ed8c0e"
+      - value: 0.10
+        color: "#99CC00"
     data_generator: |
       const data = entity.attributes.data;
       if (!data) {
