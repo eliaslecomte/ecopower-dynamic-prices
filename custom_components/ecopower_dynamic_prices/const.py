@@ -155,3 +155,11 @@ ATTR_END_TIME: Final = "end_time"
 ATTR_PRICE_PER_KWH: Final = "price_per_kwh"
 ATTR_HOUR: Final = "hour"
 ATTR_PRICE: Final = "price"
+
+# Extra costs sensor attribute keys
+ATTR_SUPPLIER_COST: Final = "supplier_cost"
+ATTR_GREEN_CERTIFICATES: Final = "green_certificates"
+ATTR_CHP_CERTIFICATES: Final = "chp_certificates"
+ATTR_DISTRIBUTION_COST: Final = "distribution_cost"
+ATTR_ENERGY_CONTRIBUTION: Final = "energy_contribution"
+ATTR_EXCISE_TAX: Final = "excise_tax"

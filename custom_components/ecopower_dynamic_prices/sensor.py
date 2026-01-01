@@ -17,10 +17,16 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
+    ATTR_CHP_CERTIFICATES,
     ATTR_DATA,
+    ATTR_DISTRIBUTION_COST,
+    ATTR_ENERGY_CONTRIBUTION,
+    ATTR_EXCISE_TAX,
+    ATTR_GREEN_CERTIFICATES,
     ATTR_RAW_TODAY,
     ATTR_RAW_TOMORROW,
     ATTR_SOURCE_ENTITY,
+    ATTR_SUPPLIER_COST,
     ATTR_TODAY,
     ATTR_TODAY_MAX,
     ATTR_TODAY_MEAN,
@@ -51,6 +57,7 @@ async def async_setup_entry(
     entities = [
         EcopowerConsumptionPriceSensor(coordinator, config_entry),
         EcopowerInjectionPriceSensor(coordinator, config_entry),
+        EcopowerExtraCostsSensor(coordinator, config_entry),
     ]
 
     async_add_entities(entities)
@@ -183,3 +190,64 @@ class EcopowerInjectionPriceSensor(EcopowerBasePriceSensor):
             unique_id_suffix="injection_price",
             data_key="injection",
         )
+
+
+class EcopowerExtraCostsSensor(CoordinatorEntity, SensorEntity):
+    """Sensor for extra costs per kWh (sum of all fixed surcharges)."""
+
+    _attr_has_entity_name = True
+    _attr_native_unit_of_measurement = "€/kWh"
+    _attr_device_class = SensorDeviceClass.MONETARY
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_suggested_display_precision = 4
+    _attr_icon = "mdi:cash-plus"
+
+    def __init__(
+        self,
+        coordinator: EcopowerDataUpdateCoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
+        """Initialize the extra costs sensor."""
+        super().__init__(coordinator)
+        self._config_entry = config_entry
+
+        self._attr_name = "Extra Costs Per kWh"
+        self._attr_unique_id = f"{config_entry.entry_id}_extra_costs_per_kwh"
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return device info."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._config_entry.entry_id)},
+            name=self._config_entry.title,
+            manufacturer="Ecopower",
+            model="Dynamic Price Calculator",
+        )
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the sum of all extra costs per kWh."""
+        params = self.coordinator._get_cost_parameters()
+
+        return (
+            params.supplier_cost
+            + params.green_certificates
+            + params.chp_certificates
+            + params.distribution_cost
+            + params.energy_contribution
+            + params.excise_tax
+        )
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return the individual cost components as attributes."""
+        params = self.coordinator._get_cost_parameters()
+
+        return {
+            ATTR_SUPPLIER_COST: params.supplier_cost,
+            ATTR_GREEN_CERTIFICATES: params.green_certificates,
+            ATTR_CHP_CERTIFICATES: params.chp_certificates,
+            ATTR_DISTRIBUTION_COST: params.distribution_cost,
+            ATTR_ENERGY_CONTRIBUTION: params.energy_contribution,
+            ATTR_EXCISE_TAX: params.excise_tax,
+        }
