@@ -175,6 +175,142 @@ apex_config:
       format: HH:mm
 ```
 
+### Consumption (tomorrow)
+
+Example ApexCharts card showing tomorrow's consumption prices with color-coded thresholds (green for low, orange for medium, red for high prices):
+
+![Consumption prices chart (tomorrow)](images/chart-consumption-prices-tomorrow.png)
+
+```yaml
+type: custom:apexcharts-card
+grid_options:
+  columns: full
+graph_span: 24h00m
+experimental:
+  color_threshold: true
+header:
+  title: Consumption Prices (Tomorrow)
+  show: true
+  show_states: true
+span:
+  start: day
+  offset: +1d
+now:
+  show: false
+series:
+  - entity: sensor.ecopower_energi_consumption_price
+    type: column
+    name: Consumption Price
+    extend_to: end
+    unit: €/kWh
+    float_precision: 4
+    yaxis_id: Price
+    show:
+      extremas: true
+      header_color_threshold: true
+    color_threshold:
+      - value: 0.15
+        color: "#99CC00"
+      - value: 0.25
+        color: "#ed8c0e"
+      - value: 0.35
+        color: "#e22904"
+    data_generator: |
+      const data = entity.attributes.raw_tomorrow;
+      if (!data || data.length === 0) {
+        console.log("ApexCharts: No 'raw_tomorrow' attribute found or empty!");
+        return [];
+      }
+      return data
+        .filter(entry => entry.hour && entry.price !== undefined)
+        .map(entry => [new Date(entry.hour).getTime(), entry.price]);
+    group_by:
+      func: avg
+      duration: 15min
+yaxis:
+  - id: Price
+    decimals: 4
+    apex_config:
+      title:
+        text: €/kWh
+      tickAmount: 5
+apex_config:
+  legend:
+    show: true
+  tooltip:
+    x:
+      show: true
+      format: HH:mm
+```
+
+### Injection (tomorrow)
+
+Example ApexCharts card showing tomorrow's injection prices with color-coded thresholds (red for negative/low, orange for medium, green for high prices):
+
+![Injection prices chart (tomorrow)](images/chart-injection-prices-tomorrow.png)
+
+```yaml
+type: custom:apexcharts-card
+grid_options:
+  columns: full
+graph_span: 24h00m
+experimental:
+  color_threshold: true
+header:
+  title: Injection Prices (Tomorrow)
+  show: true
+  show_states: true
+span:
+  start: day
+  offset: +1d
+now:
+  show: false
+series:
+  - entity: sensor.ecopower_energi_injection_price
+    type: column
+    name: Injection Price
+    extend_to: end
+    unit: €/kWh
+    float_precision: 4
+    yaxis_id: Price
+    show:
+      extremas: true
+      header_color_threshold: true
+    color_threshold:
+      - value: 0.00
+        color: "#e22904"
+      - value: 0.05
+        color: "#ed8c0e"
+      - value: 0.10
+        color: "#99CC00"
+    data_generator: |
+      const data = entity.attributes.raw_tomorrow;
+      if (!data || data.length === 0) {
+        console.log("ApexCharts: No 'raw_tomorrow' attribute found or empty!");
+        return [];
+      }
+      return data
+        .filter(entry => entry.hour && entry.price !== undefined)
+        .map(entry => [new Date(entry.hour).getTime(), entry.price]);
+    group_by:
+      func: avg
+      duration: 15min
+yaxis:
+  - id: Price
+    decimals: 4
+    apex_config:
+      title:
+        text: €/kWh
+      tickAmount: 5
+apex_config:
+  legend:
+    show: true
+  tooltip:
+    x:
+      show: true
+      format: HH:mm
+```
+
 ## Installation
 
 ### HACS (Recommended)
