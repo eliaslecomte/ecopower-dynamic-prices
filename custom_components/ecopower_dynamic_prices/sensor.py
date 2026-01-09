@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Any
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
-    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -69,7 +68,6 @@ class EcopowerBasePriceSensor(CoordinatorEntity, SensorEntity):
     _attr_has_entity_name = True
     _attr_native_unit_of_measurement = "€/kWh"
     _attr_device_class = SensorDeviceClass.MONETARY
-    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_suggested_display_precision = 4
 
     # Attributes that should not be recorded in history (large arrays)
@@ -198,7 +196,6 @@ class EcopowerExtraCostsSensor(CoordinatorEntity, SensorEntity):
     _attr_has_entity_name = True
     _attr_native_unit_of_measurement = "€/kWh"
     _attr_device_class = SensorDeviceClass.MONETARY
-    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_suggested_display_precision = 4
     _attr_icon = "mdi:cash-plus"
 
