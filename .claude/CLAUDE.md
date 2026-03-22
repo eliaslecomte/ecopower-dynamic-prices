@@ -43,3 +43,23 @@ This is a Home Assistant integration with no build system. To test:
 - Use type hints for all function parameters and return values
 - Use async/await patterns for all I/O operations
 - Prefix private methods with underscore
+
+## Git Commit Scopes
+
+Use conventional commits with these scopes:
+
+| Scope | Covers |
+|-------|--------|
+| `calc` | `calculations.py` — price calculation logic |
+| `config` | `config_flow.py` — configuration UI flow |
+| `const` | `const.py` — constants, defaults, entity definitions |
+| `sensor` | `sensor.py` — price sensor entities |
+| `number` | `number.py` — number entities for cost parameters |
+| `parser` | `parsers.py` — source integration parsers |
+| `i18n` | `translations/`, `strings.json` — translations |
+| `init` | `__init__.py` — integration setup, coordinator |
+| `docs` | `README.md`, `images/` — documentation |
+| `ci` | `.github/workflows/` — CI/CD |
+| `claude` | `.claude/` — Claude Code configuration |
+
+Omit the scope for changes spanning multiple components.
