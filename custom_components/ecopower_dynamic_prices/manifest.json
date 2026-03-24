@@ -1,12 +1,12 @@
 {
   "domain": "ecopower_dynamic_prices",
   "name": "Ecopower Dynamic Prices",
-  "version": "1.0.0",
-  "documentation": "https://github.com/eliaslecomte/ecopower-dynamic-prices",
-  "issue_tracker": "https://github.com/eliaslecomte/ecopower-dynamic-prices/issues",
-  "dependencies": [],
   "codeowners": ["@eliaslecomte"],
-  "requirements": [],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/eliaslecomte/ecopower-dynamic-prices",
   "iot_class": "local_polling",
-  "config_flow": true
+  "issue_tracker": "https://github.com/eliaslecomte/ecopower-dynamic-prices/issues",
+  "requirements": [],
+  "version": "1.0.0"
 }
