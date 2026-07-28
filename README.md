@@ -1,6 +1,6 @@
 # Ecopower Dynamic Prices
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
 
 A Home Assistant integration that calculates real electricity prices for Ecopower customers in Belgium, including all taxes, fees, and supplier margins.
 
@@ -315,13 +315,14 @@ apex_config:
 
 ### HACS (Recommended)
 
+This integration is available in the HACS default repository.
+
 1. Open HACS in Home Assistant
-2. Click on "Integrations"
-3. Click the three dots in the top right corner
-4. Select "Custom repositories"
-5. Add `https://github.com/eliaslecomte/ecopower-dynamic-prices` as an Integration
-6. Click "Install"
-7. Restart Home Assistant
+2. Search for "Ecopower Dynamic Prices"
+3. Click "Download"
+4. Restart Home Assistant
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eliaslecomte&repository=ecopower-dynamic-prices&category=integration)
 
 ### Manual Installation
 
